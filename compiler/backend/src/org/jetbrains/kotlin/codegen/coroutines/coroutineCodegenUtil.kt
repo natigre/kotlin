@@ -361,7 +361,7 @@ fun createMethodNodeForCoroutineContext(
     functionDescriptor: FunctionDescriptor,
     languageVersionSettings: LanguageVersionSettings
 ): MethodNode {
-    assert(functionDescriptor.isBuiltInCoroutineContext(languageVersionSettings)) {
+    assert(functionDescriptor.isBuiltInCoroutineContext()) {
         "functionDescriptor must be kotlin.coroutines.intrinsics.coroutineContext property getter"
     }
 
