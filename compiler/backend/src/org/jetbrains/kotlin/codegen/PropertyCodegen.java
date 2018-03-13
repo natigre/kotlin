@@ -403,7 +403,8 @@ public class PropertyCodegen {
         if (AsmUtil.isInstancePropertyWithStaticBackingField(propertyDescriptor) ) {
             modifiers |= ACC_STATIC;
 
-            if (JvmAbi.isPropertyWithBackingFieldInOuterClass(propertyDescriptor)) {
+            if (JvmAbi.isPropertyWithBackingFieldInOuterClass(propertyDescriptor) &&
+                !AsmUtil.isPropertyWithBackingFieldCopyInOuterClass(propertyDescriptor)) {
                 ImplementationBodyCodegen codegen = (ImplementationBodyCodegen) memberCodegen.getParentCodegen();
                 builder = codegen.v;
                 backingFieldContext = codegen.context;
