@@ -42,10 +42,7 @@ import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
-import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
-import org.jetbrains.kotlin.idea.util.hasActualsFor
-import org.jetbrains.kotlin.idea.util.hasDeclarationOf
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
@@ -132,12 +129,6 @@ class KotlinLineMarkerProvider : LineMarkerProvider {
         }
     }
 }
-
-internal fun KtNamedDeclaration.isExpectDeclaration(): Boolean =
-        (toDescriptor() as? MemberDescriptor)?.isExpect == true
-
-internal fun KtNamedDeclaration.isActualDeclaration(): Boolean =
-        (toDescriptor() as? MemberDescriptor)?.isActual == true
 
 private val OVERRIDING_MARK: Icon = AllIcons.Gutter.OverridingMethod
 private val IMPLEMENTING_MARK: Icon = AllIcons.Gutter.ImplementingMethod

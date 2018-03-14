@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
@@ -111,3 +112,10 @@ fun KtDeclaration.actualsForExpected(module: Module? = null): Set<KtDeclaration>
         ?.mapNotNullTo(LinkedHashSet()) {
             DescriptorToSourceUtils.descriptorToDeclaration(it) as? KtDeclaration
         } ?: emptySet()
+
+
+fun KtNamedDeclaration.isExpectDeclaration(): Boolean =
+    (toDescriptor() as? MemberDescriptor)?.isExpect == true
+
+fun KtNamedDeclaration.isActualDeclaration(): Boolean =
+    (toDescriptor() as? MemberDescriptor)?.isActual == true
