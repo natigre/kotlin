@@ -19,10 +19,10 @@ package org.jetbrains.kotlin.idea.goto
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.highlighter.markers.actualsForExpected
-import org.jetbrains.kotlin.idea.highlighter.markers.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.highlighter.markers.isActualDeclaration
 import org.jetbrains.kotlin.idea.highlighter.markers.isExpectDeclaration
+import org.jetbrains.kotlin.idea.util.actualsForExpected
+import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
