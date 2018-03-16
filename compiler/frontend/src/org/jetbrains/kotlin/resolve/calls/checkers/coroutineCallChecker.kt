@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.resolve.calls.checkers
@@ -46,11 +35,9 @@ import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-val COROUTINE_CONTEXT_1_2_20_FQ_NAME = DescriptorUtils.COROUTINES_INTRINSICS_PACKAGE_FQ_NAME.child(Name.identifier("coroutineContext"))
 val COROUTINE_CONTEXT_FQ_NAME = DescriptorUtils.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("coroutineContext"))
 
-fun FqName.isBuiltInCorouineContext() =
-    this == COROUTINE_CONTEXT_1_2_20_FQ_NAME || this == COROUTINE_CONTEXT_FQ_NAME
+fun FqName.isBuiltInCorouineContext() = this == COROUTINE_CONTEXT_FQ_NAME
 
 fun FunctionDescriptor.isBuiltInCoroutineContext() =
     (this as? PropertyGetterDescriptor)?.correspondingProperty?.fqNameSafe?.isBuiltInCorouineContext() == true
@@ -64,10 +51,7 @@ object CoroutineSuspendCallChecker : CallChecker {
         val descriptor = resolvedCall.candidateDescriptor
         when (descriptor) {
             is FunctionDescriptor -> if (!descriptor.isSuspend) return
-            is PropertyDescriptor -> when (descriptor.fqNameSafe) {
-                COROUTINE_CONTEXT_1_2_20_FQ_NAME, COROUTINE_CONTEXT_FQ_NAME -> {}
-                else -> return
-            }
+            is PropertyDescriptor -> if (descriptor.fqNameSafe != COROUTINE_CONTEXT_FQ_NAME) return
             else -> return
         }
 
