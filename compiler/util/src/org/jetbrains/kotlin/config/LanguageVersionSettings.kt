@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
+ * Copyright 2010-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license
  * that can be found in the license/LICENSE.txt file.
  */
 
@@ -86,7 +86,7 @@ enum class LanguageFeature(
 
     MultiPlatformProjects(sinceVersion = null, defaultState = State.DISABLED),
 
-    NewInference(sinceVersion = KOTLIN_1_3, defaultState = State.DISABLED),
+    NewInference(sinceVersion = KOTLIN_1_2, defaultState = State.ENABLED),
 
     ;
 
