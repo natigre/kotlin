@@ -96,13 +96,26 @@ abstract class AbstractBinaryClassAnnotationAndConstantLoader<A : Any, C : Any, 
             val fieldSignature = getPropertySignature(proto, container.nameResolver, container.typeTable, field = true)
 
             val isConst = Flags.IS_CONST.get(proto.flags)
-
+            val isMovedFromInterfaceCompanion = proto.getExtension(JvmProtoBuf.isMovedFromInterfaceCompanion) ?: false
             val propertyAnnotations = syntheticFunctionSignature?.let { sig ->
-                findClassAndLoadMemberAnnotations(container, sig, property = true, isConst = isConst)
+                findClassAndLoadMemberAnnotations(
+                    container,
+                    sig,
+                    property = true,
+                    isConst = isConst,
+                    isMovedFromInterfaceCompanion = isMovedFromInterfaceCompanion
+                )
             }.orEmpty()
 
             val fieldAnnotations = fieldSignature?.let { sig ->
-                findClassAndLoadMemberAnnotations(container, sig, property = true, field = true, isConst = isConst)
+                findClassAndLoadMemberAnnotations(
+                    container,
+                    sig,
+                    property = true,
+                    field = true,
+                    isConst = isConst,
+                    isMovedFromInterfaceCompanion = isMovedFromInterfaceCompanion
+                )
             }.orEmpty()
 
             // TODO: check delegate presence in some other way
@@ -124,7 +137,7 @@ abstract class AbstractBinaryClassAnnotationAndConstantLoader<A : Any, C : Any, 
                 container.nameResolver.getString(proto.name),
                 ClassMapperLite.mapClass((container as ProtoContainer.Class).classId.asString())
         )
-        return findClassAndLoadMemberAnnotations(container, signature)
+        return findClassAndLoadMemberAnnotations(container, signature, isMovedFromInterfaceCompanion = false)
     }
 
     protected abstract fun loadPropertyAnnotations(propertyAnnotations: List<A>, fieldAnnotations: List<A>,
@@ -133,11 +146,24 @@ abstract class AbstractBinaryClassAnnotationAndConstantLoader<A : Any, C : Any, 
     protected abstract fun transformAnnotations(annotations: List<A>): List<T>
 
     private fun findClassAndLoadMemberAnnotations(
-            container: ProtoContainer, signature: MemberSignature,
-            property: Boolean = false, field: Boolean = false, isConst: Boolean? = null
+        container: ProtoContainer,
+        signature: MemberSignature,
+        property: Boolean = false,
+        field: Boolean = false,
+        isConst: Boolean? = null,
+        isMovedFromInterfaceCompanion: Boolean = false
     ): List<A> {
         val kotlinClass =
-                findClassWithAnnotationsAndInitializers(container, getSpecialCaseContainerClass(container, property, field, isConst))
+            findClassWithAnnotationsAndInitializers(
+                container,
+                getSpecialCaseContainerClass(
+                    container,
+                    property,
+                    field,
+                    isConst,
+                    isMovedFromInterfaceCompanion
+                )
+            )
                 ?: return listOf()
 
         return storage(kotlinClass).memberAnnotations[signature] ?: listOf()
@@ -154,7 +180,7 @@ abstract class AbstractBinaryClassAnnotationAndConstantLoader<A : Any, C : Any, 
         if (methodSignature != null) {
             val index = parameterIndex + computeJvmParameterIndexShift(container, callableProto)
             val paramSignature = MemberSignature.fromMethodSignatureAndParameterIndex(methodSignature, index)
-            return findClassAndLoadMemberAnnotations(container, paramSignature)
+            return findClassAndLoadMemberAnnotations(container, paramSignature, isMovedFromInterfaceCompanion = false)
         }
 
         return listOf()
@@ -181,7 +207,7 @@ abstract class AbstractBinaryClassAnnotationAndConstantLoader<A : Any, C : Any, 
         val methodSignature = getCallableSignature(proto, container.nameResolver, container.typeTable, kind)
         if (methodSignature != null) {
             val paramSignature = MemberSignature.fromMethodSignatureAndParameterIndex(methodSignature, 0)
-            return findClassAndLoadMemberAnnotations(container, paramSignature)
+            return findClassAndLoadMemberAnnotations(container, paramSignature, isMovedFromInterfaceCompanion = false)
         }
 
         return emptyList()
@@ -199,7 +225,13 @@ abstract class AbstractBinaryClassAnnotationAndConstantLoader<A : Any, C : Any, 
         val signature = getCallableSignature(proto, container.nameResolver, container.typeTable, AnnotatedCallableKind.PROPERTY)
                         ?: return null
 
-        val specialCase = getSpecialCaseContainerClass(container, property = true, field = true, isConst = Flags.IS_CONST.get(proto.flags))
+        val specialCase = getSpecialCaseContainerClass(
+            container,
+            property = true,
+            field = true,
+            isConst = Flags.IS_CONST.get(proto.flags),
+            isMovedFromInterfaceCompanion = proto.getExtension(JvmProtoBuf.isMovedFromInterfaceCompanion)
+        )
         val kotlinClass = findClassWithAnnotationsAndInitializers(container, specialCase) ?: return null
 
         return storage(kotlinClass).propertyConstants[signature]
@@ -218,7 +250,11 @@ abstract class AbstractBinaryClassAnnotationAndConstantLoader<A : Any, C : Any, 
     // TODO: do not use KotlinClassFinder#findKotlinClass here because it traverses the file system in the compiler
     // Introduce an API in KotlinJvmBinaryClass to find a class nearby instead
     private fun getSpecialCaseContainerClass(
-            container: ProtoContainer, property: Boolean, field: Boolean, isConst: Boolean?
+        container: ProtoContainer,
+        property: Boolean,
+        field: Boolean,
+        isConst: Boolean?,
+        isMovedFromInterfaceCompanion: Boolean
     ): KotlinJvmBinaryClass? {
         if (property) {
             checkNotNull(isConst) { "isConst should not be null for property (container=$container)" }
@@ -238,7 +274,12 @@ abstract class AbstractBinaryClassAnnotationAndConstantLoader<A : Any, C : Any, 
         }
         if (field && container is ProtoContainer.Class && container.kind == ProtoBuf.Class.Kind.COMPANION_OBJECT) {
             val outerClass = container.outerClass
-            if (outerClass != null && (outerClass.kind == ProtoBuf.Class.Kind.CLASS || outerClass.kind == ProtoBuf.Class.Kind.ENUM_CLASS)) {
+            if (outerClass != null &&
+                (outerClass.kind == ProtoBuf.Class.Kind.CLASS || outerClass.kind == ProtoBuf.Class.Kind.ENUM_CLASS ||
+                        (isMovedFromInterfaceCompanion &&
+                                (outerClass.kind == ProtoBuf.Class.Kind.INTERFACE ||
+                                        outerClass.kind == ProtoBuf.Class.Kind.ANNOTATION_CLASS)))
+            ) {
                 // Backing fields of properties of a companion object in a class are generated in the outer class
                 return outerClass.toBinaryClass()
             }
